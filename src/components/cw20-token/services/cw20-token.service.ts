@@ -18,6 +18,7 @@ import { ServiceUtil } from '../../../shared/utils/service.util';
 import { AssetDto } from '../dtos/asset.dto';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
 import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
+import { Cw20TokenByDenomsParamsDto } from '../dtos/cw20-token-by-denoms.dto';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 
 @Injectable()
@@ -250,6 +251,28 @@ export class Cw20TokenService {
     }
 
     return { tokens, count: count + result.length };
+  }
+
+  async getCw20TokenByDenoms(
+    ctx: RequestContext,
+    request: Cw20TokenByDenomsParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getCw20TokenByDenoms.name} was called!`);
+
+    const ibcInfor = (
+      await this.tokenMarketsRepository.find({
+        where: { denom: In([request.denoms || '']) },
+      })
+    ).map((ibc) => {
+      return {
+        [ibc.denom]: {
+          price: ibc.current_price,
+          price_change_percentage_24h: ibc.price_change_percentage_24h,
+        },
+      };
+    });
+
+    return ibcInfor;
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
