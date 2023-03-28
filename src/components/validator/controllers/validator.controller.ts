@@ -20,11 +20,11 @@ import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
-import { GoogleOauthGuard } from 'src/auth/google/google-oauth.guard';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
 
 @ApiTags('validators')
 @Controller('validators')
-@UseGuards(GoogleOauthGuard)
+@UseGuards(JwtAuthGuard)
 export class ValidatorController {
   constructor(
     private readonly validatorService: ValidatorService,

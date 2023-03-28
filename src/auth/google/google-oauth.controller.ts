@@ -20,7 +20,8 @@ export class GoogleOauthController {
     res.cookie('jwt', accessToken, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: true,
     });
-    return res.redirect('/doc');
+    return res.redirect('/api/v1/validators');
   }
 }
