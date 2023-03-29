@@ -7,10 +7,9 @@ import { UsersService } from 'src/components/user/users.service';
 export class GoogleOauthStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly usersService: UsersService) {
     super({
-      clientID:
-        '104732842746-6photgb908882d66bnkbi1td12v42bkt.apps.googleusercontent.com',
-      clientSecret: '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',
-      callbackURL: 'http://localhost:3000/api/v1/auth/redirect',
+      clientID: '',
+      clientSecret: '',
+      callbackURL: '',
       scope: ['email', 'profile'],
     });
   }
