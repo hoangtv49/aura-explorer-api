@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param, Query,
+  UseGuards,
   UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -19,9 +20,11 @@ import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
+import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 
 @ApiTags('validators')
 @Controller('validators')
+@UseGuards(JwtAuthGuard)
 export class ValidatorController {
   constructor(
     private readonly validatorService: ValidatorService,
