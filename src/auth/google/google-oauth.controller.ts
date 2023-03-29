@@ -1,27 +1,39 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { GoogleOauthGuard } from './google-oauth.guard';
 import { JwtAuthService } from '../jwt/jwt-auth.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class GoogleOauthController {
   constructor(private jwtAuthService: JwtAuthService) {}
 
-  @Get()
+  @Get('google')
+  @ApiOperation({ summary: 'Login with Google' })
+  @ApiResponse({ status: HttpStatus.OK })
   @UseGuards(GoogleOauthGuard)
-  async googleAuth(@Req() _req) {
-    // Guard redirects
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async googleAuth() {}
 
-  @Get('redirect')
+  @Get('google/redirect')
   @UseGuards(GoogleOauthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const { accessToken } = this.jwtAuthService.login(req.user);
+    const { accessToken } = await this.jwtAuthService.login(req.user);
+
     res.cookie('jwt', accessToken, {
       httpOnly: true,
       sameSite: 'lax',
       secure: true,
     });
-    return res.redirect('/api/v1/validators');
+
+    res.send({ accessToken });
   }
 }

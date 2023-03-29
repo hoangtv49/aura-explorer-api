@@ -1,15 +1,16 @@
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-google-oauth20';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UsersService } from 'src/components/user/users.service';
+import { Profile, Strategy } from 'passport-google-oauth2';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UserService } from 'src/components/user/user.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GoogleOauthStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly usersService: UsersService) {
+  constructor(configService: ConfigService, private UserService: UserService) {
     super({
-      clientID: '',
-      clientSecret: '',
-      callbackURL: '',
+      clientID: configService.get<string>('googleOAuth.clientId'),
+      clientSecret: configService.get<string>('googleOAuth.clientSecret'),
+      callbackURL: configService.get<string>('googleOAuth.redirectUrl'),
       scope: ['email', 'profile'],
     });
   }
@@ -18,15 +19,15 @@ export class GoogleOauthStrategy extends PassportStrategy(Strategy, 'google') {
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
-  ) {
+  ): Promise<any> {
     const { emails } = profile;
 
-    const user = await this.usersService.findOne({
-      where: { email: emails[0].value },
+    const user = await this.UserService.findOne({
+      where: { provider: 'google', email: emails[0].value },
     });
 
     if (!user) {
-      throw new NotFoundException('No user found');
+      throw new UnauthorizedException('You have not permission!');
     }
 
     return user;

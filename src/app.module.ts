@@ -22,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     SharedModule,
     ComponentsModule,
     ConfigModule,
@@ -35,7 +36,6 @@ import { AuthModule } from './auth/auth.module';
     Cw721TokenModule,
     SoulboundTokenModule,
     TypeOrmModule.forFeature([SyncStatusRepository]),
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil, MetricService],

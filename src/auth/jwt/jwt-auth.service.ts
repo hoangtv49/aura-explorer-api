@@ -8,7 +8,8 @@ export class JwtAuthService {
   constructor(private jwtService: JwtService) {}
 
   login(user: User) {
-    const payload: JwtPayload = { username: user.email, sub: user.id };
+    const payload: JwtPayload = { sub: user.id, email: user.email };
+
     return {
       accessToken: this.jwtService.sign(payload),
     };
