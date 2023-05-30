@@ -269,3 +269,14 @@ export enum VERIFY_CODE_RESULT {
 }
 
 export const DEFAULT_IPFS = 'https://ipfs.io/';
+
+export enum AUTH_PROVIDERS {
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
+}
+
+export const MESSAGES = {
+  ERROR: {
+    NOT_PERMISSION: 'You have not permission!',
+  },
+};
