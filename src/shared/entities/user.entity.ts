@@ -1,4 +1,4 @@
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, DeleteDateColumn, Entity, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { PROVIDER, USER_ROLE } from '../constants/common';
 
@@ -16,4 +16,7 @@ export class User extends BaseEntityIncrementId {
 
   @Column({ nullable: true })
   provider: PROVIDER;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date;
 }
