@@ -1,26 +1,40 @@
-import { Controller, Get, HttpStatus, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { GoogleOauthGuard } from './google-oauth.guard';
 import { JwtAuthService } from '../jwt/jwt-auth.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Tokens } from '../jwt/jwt-auth.service';
+import { OAuth2Client } from 'google-auth-library';
+import { GoogleOAuthService } from './google-oauth.service';
 
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+);
 @ApiTags('auth')
 @Controller('auth')
 export class GoogleOauthController {
-  constructor(private jwtAuthService: JwtAuthService) {}
+  constructor(
+    private jwtAuthService: JwtAuthService,
+    private googleOAuthService: GoogleOAuthService,
+  ) {}
 
-  @Get('google')
-  @ApiOperation({ summary: 'Login with Google' })
+  @Get('google/:token')
+  @ApiOperation({ summary: 'Verify google access token' })
   @ApiResponse({ status: HttpStatus.OK })
-  @UseGuards(GoogleOauthGuard)
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  async googleAuth() {}
-
-  @Get('google/redirect')
-  @UseGuards(GoogleOauthGuard)
-  async googleAuthRedirect(@Req() req): Promise<Tokens> {
-    const tokens = await this.jwtAuthService.login(req.user);
-
-    return tokens;
+  async login(@Param('token') token: string): Promise<any> {
+    const userInfo = await this.googleOAuthService.authenticate(token);
+    const {
+      user: { name: userName },
+      picture,
+    } = userInfo;
+    const jwtTokens = await this.jwtAuthService.login(userInfo.user);
+    return { ...jwtTokens, userName, picture };
   }
 }
