@@ -49,6 +49,7 @@ export class JwtAuthService {
     this.userService.checkLastRequiredLogin(user, refreshTokenDecoded.iat);
 
     const newToken = this.login(user);
+    console.log(newToken);
 
     return newToken;
   }
