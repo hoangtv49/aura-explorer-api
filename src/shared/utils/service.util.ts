@@ -2,8 +2,11 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AkcLogger } from '../logger/logger.service';
 import { lastValueFrom } from 'rxjs';
-import * as appConfig from '../../shared/configs/configuration';
 import axios from 'axios';
+import { bech32 } from 'bech32';
+import { ConfigService } from '@nestjs/config';
+import { AURA_INFO, CW4973_CONTRACT } from '../constants';
+import { sha256 } from 'js-sha256';
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
@@ -11,9 +14,9 @@ export class ServiceUtil {
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
+    private configService: ConfigService,
   ) {
-    const appParams = appConfig.default();
-    this.indexerV2 = appParams.indexerV2;
+    this.indexerV2 = this.configService.get('indexerV2');
   }
 
   /**
@@ -38,21 +41,15 @@ export class ServiceUtil {
     }
   }
 
-  async fetchDataFromGraphQL(query, endpoint?, headers?, method?) {
+  async fetchDataFromGraphQL(query, endpoint?, method?) {
     this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
-    const defaultHeaders = {
-      'content-type': 'application/json',
-      'x-hasura-admin-secret': this.indexerV2.secret,
-    };
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;
-    headers = headers ? headers : defaultHeaders;
     method = method ? method : 'POST';
 
     try {
       const response = await axios({
         url: endpoint,
         method: method,
-        headers: headers,
         data: query,
         timeout: 30000,
       });
@@ -73,4 +70,97 @@ export class ServiceUtil {
       return null;
     }
   }
+
+  async isValidBech32Address(address: string): Promise<any> {
+    const prefix = AURA_INFO.ADDRESS_PREFIX;
+
+    if (!address) {
+      return false;
+    }
+
+    try {
+      const { prefix: decodedPrefix } = bech32.decode(address);
+
+      if (prefix !== decodedPrefix) {
+        throw new Error(
+          `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Create token Id
+   * @param chainID
+   * @param active
+   * @param passive
+   * @param uri
+   * @returns
+   */
+  createTokenId(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ): string {
+    try {
+      const message: string = this.createMessageToSign(
+        chainID,
+        active,
+        passive,
+        uri,
+      );
+      return sha256(message);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  private createMessageToSign(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ) {
+    const message =
+      CW4973_CONTRACT.AGREEMENT + chainID + active + passive + uri;
+    const doc: any = {
+      account_number: '0',
+      chain_id: '',
+      fee: {
+        amount: [],
+        gas: '0',
+      },
+      memo: '',
+      msgs: [
+        {
+          type: 'sign/MsgSignData',
+          value: {
+            data: Buffer.from(message, 'utf8').toString('base64'),
+            signer: String(passive),
+          },
+        },
+      ],
+      sequence: '0',
+    };
+    return JSON.stringify(doc);
+  }
+
+  transform(value: string): string {
+    const ipfsUrl = this.configService.get('ipfsUrl');
+    if (!value.includes('https://ipfs.io/')) {
+      return ipfsUrl + value.replace('://', '/');
+    } else {
+      return value.replace('https://ipfs.io/', ipfsUrl);
+    }
+  }
+}
+
+export function secondsToDate(seconds: number): Date {
+  const secondsToMilliseconds = 1000;
+  return new Date(seconds * secondsToMilliseconds);
 }
